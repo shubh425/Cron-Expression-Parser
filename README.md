@@ -15,7 +15,7 @@ The 'parse' function takes a cron expression as input and parses it to return a 
 
 The function uses regular expressions to parse the fields of the cron expression and returns a formatted output with the labels for each field and its corresponding value.
 
-Allowed special characters are : asterisk (*), comma (,), dash(-), backslash (/).
+Allowed special characters are : asterisk (*), comma (,), dash(-), slash (/).
 
 ## Usage
 To use the 'parse' function, import it into your Python script and call it with a cron expression as its input parameter:
