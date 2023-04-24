@@ -93,7 +93,7 @@ def parse(cron):                                                    #main functi
     if len(parts) != 6:
         raise TypeError("Invalid cron format")
 
-    for char in ''.join(parts[:5]):                                  #this block needs to be added in original code
+    for char in ''.join(parts[:5]):                                 
         if char.isalpha() or char in ("~!#$%^&()_?."):
             raise ValueError("Invalid cron format")
     
