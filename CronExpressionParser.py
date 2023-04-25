@@ -33,12 +33,30 @@ def comma_parser(field, value, separator = " "):                    #function to
                 raise IndexError("Invalid range.")
         return separator.join(parts)
 
-
 def range_parser(field, value):                                     #function to create the range if values separated by '-' 
     if re.match(r"^[0-9]+-[0-9]+$", value):
-        low, high = map(int, value.split("-"))                      #if range already provided in cron string
-        return expand(low, high, field_map[field]["range"])
+        low, high = map(int, value.split("-"))
+        min,max = field_map[field]["range"]
+        output = []
+        if low > high:
+            while low <= max:
+                output.append(str(low))
+                low += 1
+            
+            while min <= high:
+                output.append(str(min))
+                min += 1
+            return " ".join(output)
+        else:
+            return expand(low, high, field_map[field]["range"])                     #if range already provided in cron string
+        
 
+def new_range_parser(field, value):                                     #function to create the range if values separated by '-' 
+    if re.match(r"^[0-9]+-[0-9]+/[0-9]+$", value):
+        low, high = value.split("-")
+        high, step = high.split('/')
+        return expand(low,high,field_map[field]["range"],step)
+        
 
 def star_parser(field, value):                                      #function to check for '*' in fields, if present use standard range
     if value == "*":
@@ -47,9 +65,9 @@ def star_parser(field, value):                                      #function to
 
 
 def step_parser(field, value):                                      #function to check for step value to increase start
-    if '/' in value:
+    if re.match(r"^[*]/[0-9]+$|[0-9]+/[0-9]+$", value):
         start, step = value.split("/")
-        low, high = field_map[field]["range"]
+        low, high = field_map[field]["range"]              #5-45/10    5 15 25 35 45 
         if start != "*":
             low = int(start)
         return expand(low, high, field_map[field]["range"], step)
@@ -57,10 +75,11 @@ def step_parser(field, value):                                      #function to
 
 parsers = [
     number_parser,
-    step_parser,
     comma_parser,
     range_parser,
     star_parser,
+    step_parser,
+    new_range_parser
 ]
 
 
@@ -69,7 +88,8 @@ def expand(low, high, range=[], step=1):                            #function to
     high = int(high)
     step = int(step)
     min, max = range
-    if low < min or low > high or high > max:
+
+    if low < min or high > max:
         raise IndexError("Invalid range.")                                                
     result = []
     while low <= high:
@@ -81,7 +101,7 @@ def expand(low, high, range=[], step=1):                            #function to
 def formatted_output(parsed, padding=COLUMN_SIZE):                  #function to format the output as per our need
     output = []
     for field in fields:
-        output.append(f"{labels[field].ljust(padding)}{parsed[field]}")
+        output.append(f"{labels[field].ljust(padding)} {parsed[field]}")
     return "\n".join(output)
 
 
@@ -93,7 +113,7 @@ def parse(cron):                                                    #main functi
     if len(parts) != 6:
         raise TypeError("Invalid cron format")
 
-    for char in ''.join(parts[:5]):                                 
+    for char in ''.join(parts[:5]):                                  #this block needs to be added in original code
         if char.isalpha() or char in ("~!#$%^&()_?."):
             raise ValueError("Invalid cron format")
     
@@ -111,3 +131,6 @@ def parse(cron):                                                    #main functi
                 break
         parsed[field] = value
     return formatted_output(parsed)
+
+
+print(parse('5-45/10 0 1,15 */2 5-2 /usr/bin/find'))
